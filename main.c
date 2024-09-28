@@ -1,3 +1,5 @@
+
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,11 +29,11 @@ typedef enum
 
 typedef enum
 {
+    STATEMENT_NON,
     STATEMENT_INSERT,
     STATEMENT_SELECT
 } StatementType;
 
-char * stateTypeNames[]={"新增","查询"};
 typedef struct
 {
     StatementType type;
@@ -44,7 +46,7 @@ void close_input_buffer(InputBuffer *input_buffer);
 void print_prompt();
 PrepareResult prepare_statement(InputBuffer *input_buffer, Statement *statement);
 void execute_statement(Statement *statement);
-char* convert2Str(StatementType type);
+char *convert2Str(StatementType type);
 
 // ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 
@@ -55,6 +57,8 @@ int main(int argc, char const *argv[])
     {
         print_prompt();
         read_input(input_buffer);
+
+        // 是否系统命令
         if (input_buffer->buffer[0] == '.')
         {
             switch (do_meta_command(input_buffer))
@@ -71,14 +75,15 @@ int main(int argc, char const *argv[])
             }
         }
 
-        Statement statement;
+        // 解析sql
+        Statement statement = { .type = STATEMENT_NON };
         switch (prepare_statement(input_buffer, &statement))
         {
         case PREPARE_SUCCESS:
             /* code */
             break;
-        case META_COMMAND_UNRECOGNIZED_COMMAND:
-        printf("Unrecognized keyword at start of '%s'.\n",input_buffer->buffer);
+        case PREPARE_UNRECOGNIZED_STATEMENT:
+            printf("Unrecognized keyword at start of '%s'.\n", input_buffer->buffer);
             break;
         default:
             break;
@@ -136,26 +141,23 @@ MetaCommandResult do_meta_command(InputBuffer *input_buffer)
 
 PrepareResult prepare_statement(InputBuffer *input_buffer, Statement *statement)
 {
-    printf("1statement->type: %s\n",convert2Str(statement->type));
     if (strncmp(input_buffer->buffer, "insert", 6) == 0)
     {
         statement->type = STATEMENT_INSERT;
         return PREPARE_SUCCESS;
     }
-    printf("2statement->type: %s\n",convert2Str(statement->type));
-    if (strcmp(input_buffer->buffer, "select") == 0)
+    if (strncmp(input_buffer->buffer, "select", 6) == 0)
     {
         statement->type = STATEMENT_SELECT;
         return PREPARE_SUCCESS;
     }
-printf("3statement->type: %s\n",convert2Str(statement->type));
     return PREPARE_UNRECOGNIZED_STATEMENT;
 }
 
 void execute_statement(Statement *statement)
 {
-    printf("statement->type: %s\n",convert2Str(statement->type));
-    switch (statement->type){
+    switch (statement->type)
+    {
     case (STATEMENT_INSERT):
         printf("This is where we would do an insert.\n");
         break;
@@ -165,15 +167,21 @@ void execute_statement(Statement *statement)
     }
 }
 
-char* convert2Str(StatementType type){
- switch (type)
+char *convert2Str(StatementType type)
+{
+    char *res;
+    switch (type)
     {
     case (STATEMENT_INSERT):
-        return "新增";
+        res = "新增";
+        break;
     case (STATEMENT_SELECT):
-        printf("This is where we would do a select.\n");
-        return "查询";
+        res = "查询";
+        break;
     default:
-        return "未知";
+        res = "未知";
+        break;
     }
+    return res;
 }
+
