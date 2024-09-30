@@ -3,6 +3,8 @@
         "unistd.h": "c",
         "stdlib.h": "c",
         "types.h": "c",
-        "C_Cpp.autocomplete": "Enabled"
+        "C_Cpp.autocomplete": "Enabled",
+        "stdint.h": "c",
+        "alloca.h": "c"
     }
 }
